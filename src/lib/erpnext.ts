@@ -1,6 +1,6 @@
 // ERPNext API Configuration and Helper Functions
 
-const API_BASE_URL = "https://exalix.tech/api";
+const API_BASE_URL = "https://exalixtech.com/api";
 
 interface ERPNextCredentials {
   usr: string;
