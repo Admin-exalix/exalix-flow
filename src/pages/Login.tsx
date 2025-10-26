@@ -51,7 +51,7 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Building2 className="h-8 w-8 text-primary" />
+            <img src="/files/Logo.png" alt="" />
           </div>
           <CardTitle className="text-2xl font-bold">Exalix ERP</CardTitle>
           <CardDescription>

@@ -1,46 +1,160 @@
 import { Layout } from "@/components/layout/Layout";
 import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, TrendingUp, Package, DollarSign, Plus, RefreshCw } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ShoppingCart,
+  TrendingUp,
+  Package,
+  DollarSign,
+  Plus,
+  RefreshCw,
+  Truck,
+  ArrowDownCircle,
+  ArrowUpCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { erpnextClient } from "@/lib/erpnext";
 
 const Home = () => {
   const navigate = useNavigate();
 
-  const stats = [
-    {
-      title: "Total Orders",
-      value: "248",
-      icon: ShoppingCart,
-      trend: { value: "12% from last month", isPositive: true },
-    },
-    {
-      title: "Stock Value",
-      value: "$124,590",
-      icon: Package,
-      trend: { value: "8% from last month", isPositive: true },
-    },
-    {
-      title: "Revenue",
-      value: "$89,400",
-      icon: TrendingUp,
-      trend: { value: "5% from last month", isPositive: true },
-    },
-    {
-      title: "Outstanding",
-      value: "$12,340",
-      icon: DollarSign,
-      trend: { value: "3% from last month", isPositive: false },
-    },
-  ];
+  const [stats, setStats] = useState<any[]>([]);
+  const [salesOrders, setSalesOrders] = useState<any[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
+  const [recentSales, setRecentSales] = useState<any[]>([]);
+  const [recentPurchases, setRecentPurchases] = useState<any[]>([]);
 
-  const recentActivities = [
-    { id: 1, type: "Purchase Order", name: "PO-2024-001", time: "2 hours ago", status: "pending" },
-    { id: 2, type: "Sales Order", name: "SO-2024-045", time: "3 hours ago", status: "completed" },
-    { id: 3, type: "Stock Entry", name: "STE-2024-023", time: "5 hours ago", status: "completed" },
-    { id: 4, type: "Invoice", name: "INV-2024-089", time: "1 day ago", status: "pending" },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!erpnextClient.isAuthenticated()) return;
+
+      try {
+        // ✅ Fetch Sales Orders (submitted)
+        const sales = await erpnextClient.fetchResource(
+          "Sales Order",
+          { docstatus: 1 },
+          ["name", "customer", "grand_total", "status", "transaction_date"]
+        );
+
+        // ✅ Fetch Purchase Orders (submitted)
+        const purchases = await erpnextClient.fetchResource(
+          "Purchase Order",
+          { docstatus: 1 },
+          ["name", "supplier", "grand_total", "status", "transaction_date"]
+        );
+
+        // ✅ Fetch Sales Invoices (for receivable)
+        const salesInvoices = await erpnextClient.fetchResource(
+          "Sales Invoice",
+          { docstatus: 1 },
+          ["grand_total", "outstanding_amount"]
+        );
+
+        // ✅ Fetch Purchase Invoices (for payable)
+        const purchaseInvoices = await erpnextClient.fetchResource(
+          "Purchase Invoice",
+          { docstatus: 1 },
+          ["grand_total", "outstanding_amount"]
+        );
+
+        // ✅ Fetch Items (for stock value)
+        const items = await erpnextClient.fetchResource(
+          "Item",
+          { disabled: 0 },
+          ["name", "valuation_rate", "actual_qty"]
+        );
+
+        // ---- Calculations ----
+        // Fetch Bin for stock value
+        const bins = await erpnextClient.fetchResource(
+          "Bin",
+          {},
+          ["stock_value"]
+        );
+
+        // Sum stock_value from all bins
+        const stockValue = bins.reduce(
+          (acc, bin) => acc + (parseFloat(bin.stock_value) || 0),
+          0
+        );
+
+
+        // CORRECT: Using Sales Invoices for revenue
+        const totalRevenue = salesInvoices.reduce(
+          (acc, inv) => acc + parseFloat(inv.grand_total || 0),
+          0
+        );
+
+        const receivable = salesInvoices.reduce(
+          (acc, inv) => acc + parseFloat(inv.outstanding_amount || 0),
+          0
+        );
+
+        const payable = purchaseInvoices.reduce(
+          (acc, inv) => acc + parseFloat(inv.outstanding_amount || 0),
+          0
+        );
+
+        // ---- Stats Cards ----
+        setStats([
+          {
+            title: "Sales Orders",
+            value: sales.length.toString(),
+            icon: ShoppingCart,
+            trend: { value: `${sales.length} total`, isPositive: true },
+          },
+          {
+            title: "Purchase Orders",
+            value: purchases.length.toString(),
+            icon: Truck,
+            trend: { value: `${purchases.length} total`, isPositive: true },
+          },
+          {
+            title: "Revenue",
+            value: `₹${totalRevenue.toLocaleString()}`,
+            icon: TrendingUp,
+            trend: { value: "Updated", isPositive: true },
+          },
+          {
+            title: "Stock Value",
+            value: `₹${stockValue.toLocaleString()}`,
+            icon: Package,
+            trend: { value: "Updated", isPositive: true },
+          },
+          {
+            title: "Receivable",
+            value: `₹${receivable.toLocaleString()}`,
+            icon: ArrowDownCircle,
+            trend: { value: "Pending", isPositive: true },
+          },
+          {
+            title: "Payable",
+            value: `₹${payable.toLocaleString()}`,
+            icon: ArrowUpCircle,
+            trend: { value: "Pending", isPositive: false },
+          },
+        ]);
+
+        // ---- Data for lists ----
+        setSalesOrders(sales);
+        setPurchaseOrders(purchases);
+        setRecentSales(sales.slice(-5));
+        setRecentPurchases(purchases.slice(-5));
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <Layout>
@@ -49,15 +163,22 @@ const Home = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Welcome back to Exalix ERP</p>
+            <p className="text-sm text-muted-foreground">
+              Welcome back to Exalix ERP
+            </p>
           </div>
-          <Button variant="outline" size="icon" className="rounded-full">
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full"
+            onClick={() => window.location.reload()}
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {stats.map((stat, index) => (
             <StatCard
               key={index}
@@ -82,7 +203,7 @@ const Home = () => {
                 className="h-auto py-4 flex-col gap-2"
                 onClick={() => navigate("/buying/new-purchase-order")}
               >
-                <Plus className="h-5 w-5 text-primary" />
+                <Plus className="h-5 w-5 text-light" />
                 <span className="text-sm font-medium">New Purchase</span>
               </Button>
               <Button
@@ -90,7 +211,7 @@ const Home = () => {
                 className="h-auto py-4 flex-col gap-2"
                 onClick={() => navigate("/selling/new-sales-order")}
               >
-                <Plus className="h-5 w-5 text-primary" />
+                <Plus className="h-5 w-5 text-light" />
                 <span className="text-sm font-medium">New Sale</span>
               </Button>
               <Button
@@ -98,7 +219,7 @@ const Home = () => {
                 className="h-auto py-4 flex-col gap-2"
                 onClick={() => navigate("/stock")}
               >
-                <Package className="h-5 w-5 text-primary" />
+                <Package className="h-5 w-5 text-light" />
                 <span className="text-sm font-medium">View Stock</span>
               </Button>
               <Button
@@ -106,44 +227,87 @@ const Home = () => {
                 className="h-auto py-4 flex-col gap-2"
                 onClick={() => navigate("/accounts")}
               >
-                <DollarSign className="h-5 w-5 text-primary" />
+                <DollarSign className="h-5 w-5 text-light" />
                 <span className="text-sm font-medium">Accounts</span>
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Recent Activities */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="text-lg">Today's Activities</CardTitle>
-            <CardDescription>Recent transactions and updates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{activity.name}</p>
-                    <p className="text-xs text-muted-foreground">{activity.type} • {activity.time}</p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      activity.status === "completed"
-                        ? "bg-success/10 text-success"
-                        : "bg-warning/10 text-warning"
-                    }`}
+        {/* Recent Transactions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Sales */}
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg">Recent Sales Orders</CardTitle>
+              <CardDescription>Latest sales transactions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentSales.map((so) => (
+                  <div
+                    key={so.name}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                   >
-                    {activity.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {so.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {so.customer} • {so.transaction_date}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        so.status === "Completed"
+                          ? "bg-success/10 text-success"
+                          : "bg-warning/10 text-warning"
+                      }`}
+                    >
+                      {so.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Purchases */}
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg">Recent Purchase Orders</CardTitle>
+              <CardDescription>Latest purchase transactions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentPurchases.map((po) => (
+                  <div
+                    key={po.name}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {po.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {po.supplier} • {po.transaction_date}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        po.status === "Completed"
+                          ? "bg-success/10 text-success"
+                          : "bg-warning/10 text-warning"
+                      }`}
+                    >
+                      {po.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

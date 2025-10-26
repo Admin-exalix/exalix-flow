@@ -55,29 +55,33 @@ class ERPNextClient {
     return this.authToken !== null;
   }
 
-  async fetchResource<T>(doctype: string, filters?: Record<string, any>): Promise<T[]> {
-    if (!this.isAuthenticated()) {
-      throw new Error("Not authenticated");
-    }
+  async fetchResource<T>(
+    doctype: string,
+    filters?: Record<string, any>,
+    fields?: string[]
+  ): Promise<T[]> {
+    if (!this.isAuthenticated()) throw new Error("Not authenticated");
 
     try {
       const params = new URLSearchParams();
+
       if (filters) {
         params.append("filters", JSON.stringify(filters));
+      }
+
+      if (fields) {
+        params.append("fields", JSON.stringify(fields));
       }
 
       const response = await fetch(
         `${this.baseUrl}/resource/${doctype}?${params.toString()}`,
         {
-          headers: {
-            Authorization: `Bearer ${this.authToken}`,
-          },
+          credentials: "include", // ✅ important: send cookies
+          headers: { Authorization: `Bearer ${this.authToken}` },
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch resource");
-      }
+      if (!response.ok) throw new Error("Failed to fetch resource");
 
       const result: ERPNextResponse<T[]> = await response.json();
       return result.data;
@@ -93,11 +97,14 @@ class ERPNextClient {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/resource/${doctype}/${name}`, {
-        headers: {
-          Authorization: `Bearer ${this.authToken}`,
-        },
-      });
+      const response = await fetch(
+        `${this.baseUrl}/resource/${doctype}/${name}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.authToken}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch document");
@@ -111,7 +118,10 @@ class ERPNextClient {
     }
   }
 
-  async createDocument<T>(doctype: string, data: Partial<T>): Promise<T | null> {
+  async createDocument<T>(
+    doctype: string,
+    data: Partial<T>
+  ): Promise<T | null> {
     if (!this.isAuthenticated()) {
       throw new Error("Not authenticated");
     }
@@ -135,6 +145,19 @@ class ERPNextClient {
     } catch (error) {
       console.error(`Error creating ${doctype}:`, error);
       return null;
+    }
+  }
+  async get(url: string): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}${url}`, {
+        credentials: "include", // ✅ send cookies
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error(`Failed to fetch ${url}`);
+      return await res.json();
+    } catch (error) {
+      console.error(`Error fetching ${url}:`, error);
+      throw error;
     }
   }
 }

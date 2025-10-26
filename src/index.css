@@ -17,8 +17,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 211 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 195 94% 14%;
+    --primary-foreground: 0 0% 100%; /* This is white, which is a good contrast */
     
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 211 100% 50%;
+    --accent: 195 94% 14%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 71% 45%;
@@ -40,11 +40,11 @@ All colors MUST be HSL.
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 211 100% 50%;
+    --ring: 195 94% 14%;
 
     --radius: 0.75rem;
     
-    --gradient-primary: linear-gradient(135deg, hsl(211 100% 50%), hsl(211 100% 65%));
+    --gradient-primary: linear-gradient(135deg, #023344, #023344);
     --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 40% 98%));
     
     --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
@@ -62,7 +62,7 @@ All colors MUST be HSL.
     --popover: 217 33% 17%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 211 100% 50%;
+    --primary: 195 94% 14%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 20%;
@@ -71,7 +71,7 @@ All colors MUST be HSL.
     --muted: 217 33% 20%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 211 100% 50%;
+    --accent: 195 94% 14%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 71% 45%;
@@ -85,9 +85,9 @@ All colors MUST be HSL.
 
     --border: 217 33% 24%;
     --input: 217 33% 24%;
-    --ring: 211 100% 50%;
+    --ring: 195 94% 14%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(211 100% 50%), hsl(211 100% 65%));
+    --gradient-primary: linear-gradient(135deg, #023344, #023344);
     --gradient-card: linear-gradient(135deg, hsl(217 33% 17%), hsl(217 33% 20%));
     
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
