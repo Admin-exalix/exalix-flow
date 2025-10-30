@@ -5,6 +5,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, AlertCircle, X } from "lucide-react";
 import { erpnextClient } from "@/lib/erpnext";
 
+// Types for ERPNext resources used on this page
+type SalesInvoice = {
+  name: string;
+  customer?: string;
+  grand_total?: string | number;
+  outstanding_amount?: string | number;
+  posting_date?: string;
+  status?: string;
+};
+
+type PurchaseInvoice = {
+  name: string;
+  supplier?: string;
+  grand_total?: string | number;
+  outstanding_amount?: string | number;
+  posting_date?: string;
+  status?: string;
+};
+
+type PaymentEntry = {
+  name: string;
+  payment_type?: string;
+  paid_amount?: string | number;
+};
+
 // Modal component
 const Modal = ({ open, onClose, children }: any) => {
   if (!open) return null;
@@ -53,31 +78,31 @@ const AccountsOverview = () => {
 
       try {
         // SALES
-        const sales = await erpnextClient.fetchResource(
+        const sales = await erpnextClient.fetchResource<SalesInvoice>(
           "Sales Invoice",
           { docstatus: 1 },
           ["name", "customer", "grand_total", "outstanding_amount", "posting_date", "status"]
         );
         setSalesInvoices(sales);
-        setRevenue(sales.reduce((acc, inv) => acc + parseFloat(inv.grand_total || 0), 0));
+        setRevenue(sales.reduce((acc, inv) => acc + Number(inv.grand_total ?? 0), 0));
         setOutstandingSales(
-          sales.reduce((acc, inv) => acc + parseFloat(inv.outstanding_amount || 0), 0)
+          sales.reduce((acc, inv) => acc + Number(inv.outstanding_amount ?? 0), 0)
         );
 
         // PURCHASE
-        const purchases = await erpnextClient.fetchResource(
+        const purchases = await erpnextClient.fetchResource<PurchaseInvoice>(
           "Purchase Invoice",
           { docstatus: 1 },
           ["name", "supplier", "grand_total", "outstanding_amount", "posting_date", "status"]
         );
         setPurchaseInvoices(purchases);
-        setExpenses(purchases.reduce((acc, inv) => acc + parseFloat(inv.grand_total || 0), 0));
+        setExpenses(purchases.reduce((acc, inv) => acc + Number(inv.grand_total ?? 0), 0));
         setOutstandingPurchase(
-          purchases.reduce((acc, inv) => acc + parseFloat(inv.outstanding_amount || 0), 0)
+          purchases.reduce((acc, inv) => acc + Number(inv.outstanding_amount ?? 0), 0)
         );
 
         // PAYMENTS
-        const paymentEntries = await erpnextClient.fetchResource(
+        const paymentEntries = await erpnextClient.fetchResource<PaymentEntry>(
           "Payment Entry",
           { docstatus: 1 },
           ["name", "payment_type", "paid_amount"]
@@ -86,11 +111,11 @@ const AccountsOverview = () => {
 
         const received = paymentEntries
           .filter((p) => p.payment_type === "Receive")
-          .reduce((acc, p) => acc + parseFloat(p.paid_amount || 0), 0);
+          .reduce((acc, p) => acc + Number(p.paid_amount ?? 0), 0);
 
         const paid = paymentEntries
           .filter((p) => p.payment_type === "Pay")
-          .reduce((acc, p) => acc + parseFloat(p.paid_amount || 0), 0);
+          .reduce((acc, p) => acc + Number(p.paid_amount ?? 0), 0);
 
         setTotalReceived(received);
         setTotalPaid(paid);

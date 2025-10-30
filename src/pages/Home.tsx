@@ -23,6 +23,33 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { erpnextClient } from "@/lib/erpnext";
 
+// Types for ERPNext resources used on this page
+type SalesOrder = {
+  name: string;
+  customer: string;
+  grand_total?: string | number;
+  status: string;
+  transaction_date?: string;
+};
+
+type PurchaseOrder = {
+  name: string;
+  supplier: string;
+  grand_total?: string | number;
+  status: string;
+  transaction_date?: string;
+};
+
+type Invoice = {
+  grand_total?: string | number;
+  outstanding_amount?: string | number;
+};
+
+type BinData = {
+  stock_value?: string | number;
+};
+
+
 const Home = () => {
   const navigate = useNavigate();
 
@@ -38,28 +65,28 @@ const Home = () => {
 
       try {
         // ✅ Fetch Sales Orders (submitted)
-        const sales = await erpnextClient.fetchResource(
+        const sales = await erpnextClient.fetchResource<SalesOrder>(
           "Sales Order",
           { docstatus: 1 },
           ["name", "customer", "grand_total", "status", "transaction_date"]
         );
 
         // ✅ Fetch Purchase Orders (submitted)
-        const purchases = await erpnextClient.fetchResource(
+        const purchases = await erpnextClient.fetchResource<PurchaseOrder>(
           "Purchase Order",
           { docstatus: 1 },
           ["name", "supplier", "grand_total", "status", "transaction_date"]
         );
 
         // ✅ Fetch Sales Invoices (for receivable)
-        const salesInvoices = await erpnextClient.fetchResource(
+        const salesInvoices = await erpnextClient.fetchResource<Invoice>(
           "Sales Invoice",
           { docstatus: 1 },
           ["grand_total", "outstanding_amount"]
         );
 
         // ✅ Fetch Purchase Invoices (for payable)
-        const purchaseInvoices = await erpnextClient.fetchResource(
+        const purchaseInvoices = await erpnextClient.fetchResource<Invoice>(
           "Purchase Invoice",
           { docstatus: 1 },
           ["grand_total", "outstanding_amount"]
@@ -74,7 +101,7 @@ const Home = () => {
 
         // ---- Calculations ----
         // Fetch Bin for stock value
-        const bins = await erpnextClient.fetchResource(
+        const bins = await erpnextClient.fetchResource<BinData>(
           "Bin",
           {},
           ["stock_value"]
@@ -82,24 +109,24 @@ const Home = () => {
 
         // Sum stock_value from all bins
         const stockValue = bins.reduce(
-          (acc, bin) => acc + (parseFloat(bin.stock_value) || 0),
+          (acc, bin) => acc + Number((bin.stock_value ?? 0) as number | string),
           0
         );
 
 
         // CORRECT: Using Sales Invoices for revenue
         const totalRevenue = salesInvoices.reduce(
-          (acc, inv) => acc + parseFloat(inv.grand_total || 0),
+          (acc, inv) => acc + Number(inv.grand_total ?? 0),
           0
         );
 
         const receivable = salesInvoices.reduce(
-          (acc, inv) => acc + parseFloat(inv.outstanding_amount || 0),
+          (acc, inv) => acc + Number(inv.outstanding_amount ?? 0),
           0
         );
 
         const payable = purchaseInvoices.reduce(
-          (acc, inv) => acc + parseFloat(inv.outstanding_amount || 0),
+          (acc, inv) => acc + Number(inv.outstanding_amount ?? 0),
           0
         );
 
