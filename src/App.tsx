@@ -8,6 +8,12 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import Dashboard from "./pages/Dashboard";
+import Projects from "./pages/Projects/Projects";
+import HR from "./pages/HR/HR";
+import Reports from "./pages/Reports/Reports";
+import Notifications from "./pages/Notifications";
+import Support from "./pages/Support/support";
 import PurchaseOrderList from "./pages/buying/PurchaseOrderList";
 import NewPurchaseOrder from "./pages/buying/NewPurchaseOrder";
 import SalesOrderList from "./pages/selling/SalesOrderList";
@@ -34,8 +40,14 @@ const App = () => (
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+          <Route path="/hr" element={<ProtectedRoute><HR /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
           <Route path="/buying" element={<ProtectedRoute><PurchaseOrderList /></ProtectedRoute>} />
           <Route path="/buying/new-purchase-order" element={<ProtectedRoute><NewPurchaseOrder /></ProtectedRoute>} />
           <Route path="/selling" element={<ProtectedRoute><SalesOrderList /></ProtectedRoute>} />

@@ -32,13 +32,13 @@ export const TopNav = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-screen-xl mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <SidebarTrigger>
-            <Menu className="h-5 w-5" />
+          <SidebarTrigger className="sm:block md:hidden">
+            <Menu className="h-8 w-8 hidden " />
           </SidebarTrigger>
           <img
             src="/files/Logo.png"
             alt="Exalix Tech"
-            className="h-8 w-auto cursor-pointer"
+            className="h-10 w-auto cursor-pointer"
             onClick={() => navigate("/")}
           />
           <span className="text-sm font-medium text-foreground">

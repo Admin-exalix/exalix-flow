@@ -18,7 +18,6 @@ class ERPNextClient {
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
-    // Try to load token from localStorage
     this.authToken = localStorage.getItem("erpnext_token");
   }
 
@@ -30,11 +29,11 @@ class ERPNextClient {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(credentials),
+        credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
-        // Store session/token
         this.authToken = data.message || "authenticated";
         localStorage.setItem("erpnext_token", this.authToken);
         return true;
@@ -65,18 +64,13 @@ class ERPNextClient {
     try {
       const params = new URLSearchParams();
 
-      if (filters) {
-        params.append("filters", JSON.stringify(filters));
-      }
-
-      if (fields) {
-        params.append("fields", JSON.stringify(fields));
-      }
+      if (filters) params.append("filters", JSON.stringify(filters));
+      if (fields) params.append("fields", JSON.stringify(fields));
 
       const response = await fetch(
         `${this.baseUrl}/resource/${doctype}?${params.toString()}`,
         {
-          credentials: "include", // ✅ important: send cookies
+          credentials: "include",
           headers: { Authorization: `Bearer ${this.authToken}` },
         }
       );
@@ -92,23 +86,17 @@ class ERPNextClient {
   }
 
   async getDocument<T>(doctype: string, name: string): Promise<T | null> {
-    if (!this.isAuthenticated()) {
-      throw new Error("Not authenticated");
-    }
+    if (!this.isAuthenticated()) throw new Error("Not authenticated");
 
     try {
       const response = await fetch(
         `${this.baseUrl}/resource/${doctype}/${name}`,
         {
-          headers: {
-            Authorization: `Bearer ${this.authToken}`,
-          },
+          headers: { Authorization: `Bearer ${this.authToken}` },
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch document");
-      }
+      if (!response.ok) throw new Error("Failed to fetch document");
 
       const result: ERPNextResponse<T> = await response.json();
       return result.data;
@@ -122,9 +110,7 @@ class ERPNextClient {
     doctype: string,
     data: Partial<T>
   ): Promise<T | null> {
-    if (!this.isAuthenticated()) {
-      throw new Error("Not authenticated");
-    }
+    if (!this.isAuthenticated()) throw new Error("Not authenticated");
 
     try {
       const response = await fetch(`${this.baseUrl}/resource/${doctype}`, {
@@ -136,9 +122,7 @@ class ERPNextClient {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to create document");
-      }
+      if (!response.ok) throw new Error("Failed to create document");
 
       const result: ERPNextResponse<T> = await response.json();
       return result.data;
@@ -147,10 +131,11 @@ class ERPNextClient {
       return null;
     }
   }
+
   async get(url: string): Promise<any> {
     try {
       const res = await fetch(`${this.baseUrl}${url}`, {
-        credentials: "include", // ✅ send cookies
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
       });
       if (!res.ok) throw new Error(`Failed to fetch ${url}`);
@@ -159,6 +144,80 @@ class ERPNextClient {
       console.error(`Error fetching ${url}:`, error);
       throw error;
     }
+  }
+
+  // ✅ Fetch ERPNext Report
+  async fetchReport(reportName: string, filters: Record<string, any> = {}) {
+    if (!this.isAuthenticated()) throw new Error("Not authenticated");
+
+    try {
+      const params = new URLSearchParams({
+        report_name: reportName,
+        filters: JSON.stringify(filters),
+      });
+
+      const response = await fetch(
+        `${
+          this.baseUrl
+        }/method/frappe.desk.query_report.run?${params.toString()}`,
+        {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.authToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch report");
+
+      const result = await response.json();
+      return result.message;
+    } catch (error) {
+      console.error(`Error fetching report ${reportName}:`, error);
+      throw error;
+    }
+  }
+
+  // ✅ Download ERPNext Report (Excel/PDF)
+  downloadReport(
+    reportName: string,
+    format: "Excel" | "PDF" = "Excel",
+    filters: Record<string, any> = {}
+  ) {
+    if (!this.isAuthenticated()) throw new Error("Not authenticated");
+
+    const url = `${
+      this.baseUrl
+    }/method/frappe.desk.query_report.export_report?report_name=${encodeURIComponent(
+      reportName
+    )}&file_format_type=${format}&filters=${encodeURIComponent(
+      JSON.stringify(filters)
+    )}`;
+
+    window.open(url, "_blank");
+  }
+  async fetchDashboardChart(name: string, filters: Record<string, any> = {}) {
+    if (!this.isAuthenticated()) throw new Error("Not authenticated");
+    const params = new URLSearchParams({
+      name: name,
+      filters: JSON.stringify(filters),
+    });
+    const response = await fetch(
+      `${
+        this.baseUrl
+      }/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get?${params.toString()}`,
+      {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.authToken}`,
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch dashboard chart");
+    const result = await response.json();
+    return result.message;
   }
 }
 
