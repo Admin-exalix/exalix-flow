@@ -1,5 +1,9 @@
 // ERPNext API Configuration and Helper Functions
 
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 const API_BASE_URL = "https://exalixtech.com/api";
 
 interface ERPNextCredentials {
@@ -25,9 +29,7 @@ class ERPNextClient {
     try {
       const response = await fetch(`${this.baseUrl}/method/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
         credentials: "include",
       });
@@ -63,7 +65,6 @@ class ERPNextClient {
 
     try {
       const params = new URLSearchParams();
-
       if (filters) params.append("filters", JSON.stringify(filters));
       if (fields) params.append("fields", JSON.stringify(fields));
 
@@ -91,9 +92,7 @@ class ERPNextClient {
     try {
       const response = await fetch(
         `${this.baseUrl}/resource/${doctype}/${name}`,
-        {
-          headers: { Authorization: `Bearer ${this.authToken}` },
-        }
+        { headers: { Authorization: `Bearer ${this.authToken}` } }
       );
 
       if (!response.ok) throw new Error("Failed to fetch document");
@@ -146,6 +145,31 @@ class ERPNextClient {
     }
   }
 
+  async fetchReportsList() {
+    if (!this.isAuthenticated()) throw new Error("Not authenticated");
+
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/resource/Report?fields=["name","ref_doctype","report_type","is_standard","module"]`,
+        {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.authToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch reports list");
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      console.error("Error fetching reports list:", error);
+      throw error;
+    }
+  }
+
   // ✅ Fetch ERPNext Report
   async fetchReport(reportName: string, filters: Record<string, any> = {}) {
     if (!this.isAuthenticated()) throw new Error("Not authenticated");
@@ -157,9 +181,7 @@ class ERPNextClient {
       });
 
       const response = await fetch(
-        `${
-          this.baseUrl
-        }/method/frappe.desk.query_report.run?${params.toString()}`,
+        `${this.baseUrl}/method/frappe.desk.query_report.run?${params.toString()}`,
         {
           credentials: "include",
           headers: {
@@ -179,45 +201,75 @@ class ERPNextClient {
     }
   }
 
-  // ✅ Download ERPNext Report (Excel/PDF)
-  downloadReport(
+  // ✅ Download ERPNext Report (Excel / PDF)
+  async downloadReport(
     reportName: string,
     format: "Excel" | "PDF" = "Excel",
     filters: Record<string, any> = {}
   ) {
     if (!this.isAuthenticated()) throw new Error("Not authenticated");
 
-    const url = `${
-      this.baseUrl
-    }/method/frappe.desk.query_report.export_report?report_name=${encodeURIComponent(
-      reportName
-    )}&file_format_type=${format}&filters=${encodeURIComponent(
-      JSON.stringify(filters)
-    )}`;
-
-    window.open(url, "_blank");
-  }
-  async fetchDashboardChart(name: string, filters: Record<string, any> = {}) {
-    if (!this.isAuthenticated()) throw new Error("Not authenticated");
-    const params = new URLSearchParams({
-      name: name,
-      filters: JSON.stringify(filters),
-    });
     const response = await fetch(
-      `${
-        this.baseUrl
-      }/method/frappe.desk.doctype.dashboard_chart.dashboard_chart.get?${params.toString()}`,
+      `${this.baseUrl}/method/frappe.desk.query_report.run`,
       {
+        method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.authToken}`,
+          Authorization: `token ${this.authToken}`,
         },
+        body: JSON.stringify({ report_name: reportName, filters }),
       }
     );
-    if (!response.ok) throw new Error("Failed to fetch dashboard chart");
+
+    if (!response.ok) throw new Error("Failed to fetch report data");
+
     const result = await response.json();
-    return result.message;
+    const data = result.message?.result || [];
+    const columns = result.message?.columns?.map((c: any) => c.label) || [];
+
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error("No valid data found for this report");
+    }
+
+    // 🧠 Flatten the data properly to match column order
+    const tableData = data.map((row: Record<string, any>) =>
+      columns.map((col: string) => {
+        const key =
+          Object.keys(row).find(
+            (k) => k.toLowerCase() === col.toLowerCase()
+          ) || "";
+        return row[key] ?? "";
+      })
+    );
+
+    if (format === "Excel") {
+      const ws = XLSX.utils.aoa_to_sheet([columns, ...tableData]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, reportName);
+      XLSX.writeFile(wb, `${reportName}.xlsx`);
+    } else {
+      const pdf = new jsPDF();
+      pdf.text(reportName, 14, 15);
+      autoTable(pdf, {
+        head: [columns],
+        body: tableData,
+        startY: 20,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] },
+      });
+      pdf.save(`${reportName}.pdf`);
+    }
+  }
+
+  async getDocMeta(doctype: string) {
+    const res = await fetch(
+      `/api/method/frappe.desk.form.load.getdoctype?doctype=${doctype}`,
+      { credentials: "include" }
+    );
+    if (!res.ok) throw new Error("Failed to fetch DocType metadata");
+    const json = await res.json();
+    return json.docs?.[0] || {};
   }
 }
 
