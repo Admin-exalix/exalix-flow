@@ -1,12 +1,12 @@
 import { 
-  Users, 
-  FolderKanban, 
-  UserCog, 
-  HeadphonesIcon, 
   BarChart3, 
   Settings, 
   Bell, 
-  FileText 
+  FileText,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+  DollarSign
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -25,10 +25,10 @@ import {
 
 const menuItems = [
   { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
-  { icon: Users, label: "CRM / Leads", path: "/crm" },
-  { icon: FolderKanban, label: "Projects", path: "/projects" },
-  { icon: UserCog, label: "HR", path: "/hr" },
-  { icon: HeadphonesIcon, label: "Support", path: "/support" },
+  { icon: DollarSign, label: "Accounting", path: "/accounts" },
+  { icon: Package, label: "Inventory", path: "/stock" },
+  { icon: ShoppingCart, label: "Purchase", path: "/buying" },
+  { icon: TrendingUp, label: "Sales", path: "/selling" },
   { icon: FileText, label: "Reports", path: "/reports" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
   { icon: Settings, label: "Settings", path: "/settings" },
