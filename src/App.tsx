@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports/Reports";
 import Notifications from "./pages/Notifications";
+import POS from "./pages/POS";
 import PurchaseOrderList from "./pages/buying/PurchaseOrderList";
 import NewPurchaseOrder from "./pages/buying/NewPurchaseOrder";
 import SalesOrderList from "./pages/selling/SalesOrderList";
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
           <Route path="/buying" element={<ProtectedRoute><PurchaseOrderList /></ProtectedRoute>} />
           <Route path="/buying/new-purchase-order" element={<ProtectedRoute><NewPurchaseOrder /></ProtectedRoute>} />
           <Route path="/selling" element={<ProtectedRoute><SalesOrderList /></ProtectedRoute>} />

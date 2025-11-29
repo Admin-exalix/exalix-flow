@@ -6,7 +6,8 @@ import {
   Package,
   ShoppingCart,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  CreditCard
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -25,6 +26,7 @@ import {
 
 const menuItems = [
   { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
+  { icon: CreditCard, label: "POS", path: "/pos" },
   { icon: DollarSign, label: "Accounting", path: "/accounts" },
   { icon: Package, label: "Inventory", path: "/stock" },
   { icon: ShoppingCart, label: "Purchase", path: "/buying" },
