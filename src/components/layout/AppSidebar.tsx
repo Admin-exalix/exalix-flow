@@ -45,8 +45,8 @@ export function AppSidebar() {
 
       <SidebarContent
         className="
-          bg-white text-foreground shadow-lg 
-          w-72 sm:w-72 md:w-72 
+          bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-foreground))] shadow-lg 
+          w-64 sm:w-64 md:w-64 
           fixed inset-y-0 left-0 z-50
           overflow-y-auto
         "
@@ -58,7 +58,9 @@ export function AppSidebar() {
         </VisuallyHidden>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Modules</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[hsl(var(--sidebar-foreground))] text-xs uppercase tracking-wider px-3 py-2">
+            Modules
+          </SidebarGroupLabel>
 
           <SidebarGroupContent>
             <SidebarMenu>
@@ -72,11 +74,11 @@ export function AppSidebar() {
                         end
                         className={({ isActive }) =>
                           isActive
-                            ? "bg-muted text-primary font-medium flex items-center gap-2 px-2 py-1 rounded"
-                            : "hover:bg-muted/50 flex items-center gap-2 px-2 py-1 rounded"
+                            ? "bg-[hsl(var(--sidebar-active))] text-white font-medium flex items-center gap-3 px-4 py-3 rounded-md mx-2 my-1"
+                            : "text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-bg))]/80 flex items-center gap-3 px-4 py-3 rounded-md mx-2 my-1"
                         }
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-5 w-5" />
                         <span>{item.label}</span>
                       </NavLink>
                     </SidebarMenuButton>
