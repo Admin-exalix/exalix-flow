@@ -264,8 +264,11 @@ class ERPNextClient {
 
   async getDocMeta(doctype: string) {
     const res = await fetch(
-      `/api/method/frappe.desk.form.load.getdoctype?doctype=${doctype}`,
-      { credentials: "include" }
+      `${this.baseUrl}/method/frappe.desk.form.load.getdoctype?doctype=${doctype}`,
+      { 
+        credentials: "include",
+        headers: { Authorization: `Bearer ${this.authToken}` }
+      }
     );
     if (!res.ok) throw new Error("Failed to fetch DocType metadata");
     const json = await res.json();
